@@ -1,0 +1,47 @@
+name: Check pull requests
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-24.04
+    permissions:
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      - name: Create deployment
+        id: deployment
+        uses: ./.github/actions/deployment/start/
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          env: preview
+      - name: Install packages
+        uses: ./.github/actions/setup-node/
+      - name: Build
+        uses: ./.github/actions/quasar-build/
+      - name: Deploy
+        id: deploy
+        uses: ./.github/actions/cf-pages/
+        with:
+          api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          path: dist/spa/
+          project: eso
+          branch: ${{ github.event_name == 'pull_request' && 'preview' || 'production' }}
+
+      - name: Finish deployment
+        uses: ./.github/actions/deployment/finish/
+        if: always()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          env: ${{ steps.deployment.outputs.env }}
+          env-url: ${{ steps.deploy.outputs.deployment-url }}
+          deployment-id: ${{ steps.deployment.outputs.deployment-id }}

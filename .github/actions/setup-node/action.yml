@@ -1,0 +1,13 @@
+name: Setup node
+description: 'Sets up node packages'
+runs:
+  using: composite
+  steps:
+    - name: Install node
+      uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+      with:
+        node-version: 22
+        cache: npm
+    - name: Install packages
+      shell: bash
+      run: npm install

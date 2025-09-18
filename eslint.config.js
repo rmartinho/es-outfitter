@@ -80,4 +80,8 @@ export default defineConfigWithVueTs(
   },
 
   prettierSkipFormatting,
+
+  {
+    ignores: ['src/model/data.js', 'src/model/data.d.ts'],
+  },
 );

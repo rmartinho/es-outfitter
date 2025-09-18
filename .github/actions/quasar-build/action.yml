@@ -1,0 +1,8 @@
+name: Quasar build
+description: 'Builds project with Quasar'
+runs:
+  using: composite
+  steps:
+    - name: Run build
+      shell: bash
+      run: npm run build
