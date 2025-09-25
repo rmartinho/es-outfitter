@@ -7,11 +7,17 @@ import { computed, ref, watchEffect } from 'vue';
 
 export interface Ship {
   name: string;
+  guns: number;
+  turrets: number;
+  bays: number;
 }
 
 export interface Variant {
   base: string;
   name: string;
+  guns: number | null;
+  turrets: number | null;
+  bays: number | null;
 }
 
 export interface Outfit {
@@ -25,7 +31,15 @@ export interface PluginData {
 }
 
 function parseDataFile(text: string): PluginData {
-  return parse(text) as PluginData;
+  const data = parse(text) as PluginData;
+  data.variants = Object.fromEntries(
+    Object.entries(data.variants).filter(([, v]) => {
+      const { base, name, guns, turrets, bays, ...attributes } = v;
+      void [base, name, guns, turrets, bays];
+      return v.guns || v.turrets || v.bays || Object.keys(attributes).length > 0;
+    }),
+  );
+  return data;
 }
 
 function mergePluginData(lhs: PluginData, rhs?: PluginData) {
