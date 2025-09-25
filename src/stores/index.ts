@@ -1,14 +1,17 @@
 import { defineStore } from '#q-app/wrappers';
 import { createPinia } from 'pinia';
-
-declare module 'pinia' {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  export interface PiniaCustomProperties {
-    // add your custom properties here, if any
-  }
-}
+import { createPersistedState } from 'pinia-plugin-persistedstate';
+import { stringify, parse } from 'zipson';
 
 export default defineStore(() => {
   const pinia = createPinia();
+  pinia.use(
+    createPersistedState({
+      serializer: {
+        serialize: stringify,
+        deserialize: parse,
+      },
+    }),
+  );
   return pinia;
 });
