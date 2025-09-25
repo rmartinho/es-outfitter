@@ -1,9 +1,7 @@
 <template>
   <q-layout view="lHh Lpr lFf">
     <q-drawer show-if-above :model-value="true">
-      <q-card class="q-ma-sm">
-        <plugin-selector />
-      </q-card>
+      <plugin-selector />
     </q-drawer>
     <q-page-container>
       <router-view />

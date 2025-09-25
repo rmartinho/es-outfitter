@@ -12,6 +12,7 @@
       >
         <q-item-label>{{ name }}</q-item-label>
         <q-item-label caption>{{ plugin.branch }}</q-item-label>
+        <q-tooltip>{{ name }} {{ plugin.enabled ? 'enabled' : 'disabled' }}</q-tooltip>
       </q-checkbox>
       <q-btn class="col-1" round dense flat icon="delete" @click="$emit('remove')">
         <q-tooltip>Delete this plugin</q-tooltip>
