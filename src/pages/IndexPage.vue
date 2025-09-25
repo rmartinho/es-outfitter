@@ -1,9 +1,5 @@
 <template>
-  <q-page class="row items-center justify-evenly">
-    <plugin-selector />
-  </q-page>
+  <q-page class="row items-center justify-evenly"> Welcome </q-page>
 </template>
 
-<script setup lang="ts">
-import PluginSelector from 'components/plugin-selector/PluginSelector.vue';
-</script>
+<script setup lang="ts"></script>

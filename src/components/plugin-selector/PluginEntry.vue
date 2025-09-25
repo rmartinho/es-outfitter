@@ -1,18 +1,19 @@
 <template>
   <q-item class="column">
     <div class="col-12 row">
-      <q-toggle
+      <q-checkbox
+        class="col-11 ellipsis"
+        dense
         checked-icon="extension"
         unchecked-icon="extension_off"
         color="positive"
         :model-value="plugin.enabled"
         @update:model-value="(v) => $emit('toggle', v)"
       >
-        <q-item-label>{{ plugin.dir ?? plugin.repo }}</q-item-label>
+        <q-item-label>{{ name }}</q-item-label>
         <q-item-label caption>{{ plugin.branch }}</q-item-label>
-      </q-toggle>
-      <q-space />
-      <q-btn round dense flat icon="delete" @click="$emit('remove')">
+      </q-checkbox>
+      <q-btn class="col-1" round dense flat icon="delete" @click="$emit('remove')">
         <q-tooltip>Delete this plugin</q-tooltip>
       </q-btn>
     </div>
@@ -27,6 +28,7 @@
 
 <script setup lang="ts">
 import type { LoadProgress, Plugin } from 'src/stores/game-data';
+import { computed } from 'vue';
 
 const { plugin, isLoading, progress, total } = defineProps<
   {
@@ -38,4 +40,6 @@ defineEmits<{
   remove: [];
   toggle: [v: boolean];
 }>();
+
+const name = computed(() => (plugin.dir ? plugin.dir.split('/').at(-1) : plugin.repo));
 </script>

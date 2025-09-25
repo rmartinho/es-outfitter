@@ -8,33 +8,33 @@
         <q-item-label>{{ Object.values(data.outfits).length }} outfits</q-item-label>
       </q-list>
     </q-item>
-    <q-item>
-      <q-list>
-        <q-form @submit="add">
-          <q-input
-            ref="new-url"
-            dense
-            standout="bg-primary text-secondary"
-            item-aligned
-            type="text"
-            v-model="newUrl"
-            label="New plugin URL"
-          >
-            <template #append>
-              <q-btn
-                :disable="newUrl.trim().length == 0"
-                round
-                dense
-                flat
-                icon="playlist_add"
-                @click="add"
-              >
-                <q-tooltip>Add new plugin</q-tooltip>
-              </q-btn>
-            </template>
-          </q-input>
-        </q-form>
+    <q-item class="column">
+      <q-form class="col" @submit="add">
+        <q-input
+          ref="new-url"
+          dense
+          standout="bg-primary text-secondary"
+          item-aligned
+          type="text"
+          v-model="newUrl"
+          label="New plugin URL"
+        >
+          <template #append>
+            <q-btn
+              :disable="newUrl.trim().length == 0"
+              round
+              dense
+              flat
+              icon="playlist_add"
+              @click="add"
+            >
+              <q-tooltip>Add new plugin</q-tooltip>
+            </q-btn>
+          </template>
+        </q-input>
+      </q-form>
 
+      <q-list>
         <template
           v-for="{ plugin, state: { isLoading, progress, total } } in pluginStates"
           :key="plugin.url"
