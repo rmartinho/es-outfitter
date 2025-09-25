@@ -126,7 +126,7 @@ export const useGameDataStore = defineStore(
       afterHydrate: (ctx) => {
         const store = ctx.store as ReturnType<typeof useGameDataStore>;
         for (const p of store.plugins) {
-          if (store.loadState[p.url]?.isLoading) {
+          if (!store.loadState[p.url] || store.loadState[p.url]!.isLoading) {
             store.removePlugin(p.url);
           }
         }
