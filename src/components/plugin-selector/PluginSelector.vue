@@ -1,13 +1,6 @@
 <template>
   <q-list class="q-gutter-sm">
     <q-item-label header>Plugins</q-item-label>
-    <q-item>
-      <q-list class="q-ml-md" dense>
-        <q-item-label>{{ Object.values(data.ships).length }} ships</q-item-label>
-        <q-item-label caption> +{{ Object.values(data.variants).length }} variants </q-item-label>
-        <q-item-label>{{ Object.values(data.outfits).length }} outfits</q-item-label>
-      </q-list>
-    </q-item>
     <q-item class="column">
       <q-form class="col" @submit="add">
         <q-input
@@ -63,7 +56,7 @@ import { useGameDataStore } from 'stores/game-data';
 import { computed, ref, useTemplateRef, watchEffect } from 'vue';
 
 const { addPlugin, removePlugin } = useGameDataStore();
-const { plugins, data, loadState } = storeToRefs(useGameDataStore());
+const { plugins, loadState } = storeToRefs(useGameDataStore());
 
 const newUrl = ref(plugins.value.length == 0 ? BASE_GAME_URL : '');
 
