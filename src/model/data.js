@@ -2007,7 +2007,7 @@ function peg$parse(input, options) {
   }
 
 
-	input = input.split('\n')
+	input = input.split(/\r?\n/)
     	.filter(l => {
         	const trimmed = l.toString().trim();
             return trimmed.length > 0 && !trimmed.startsWith('#');
