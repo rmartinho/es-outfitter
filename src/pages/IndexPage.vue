@@ -1,9 +1,13 @@
 <template>
   <q-page class="row items-center justify-evenly">
-    <plugin-selector />
+    <ship-selector :ships="data.ships" />
   </q-page>
 </template>
 
 <script setup lang="ts">
-import PluginSelector from 'components/plugin-selector/PluginSelector.vue';
+import ShipSelector from 'components/ship-selector/ShipSelector.vue';
+import { storeToRefs } from 'pinia';
+import { useGameDataStore } from 'stores/game-data';
+
+const { data } = storeToRefs(useGameDataStore());
 </script>
