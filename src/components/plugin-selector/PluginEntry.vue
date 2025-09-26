@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import type { LoadProgress, Plugin } from 'src/stores/game-data';
+import type { LoadProgress, Plugin } from 'stores/game-data';
 import { computed } from 'vue';
 
 const { plugin, isLoading, progress, total } = defineProps<

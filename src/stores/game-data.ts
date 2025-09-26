@@ -7,6 +7,9 @@ import { computed, ref, watchEffect } from 'vue';
 
 export interface Ship {
   name: string;
+  category?: string;
+  thumbnail: string;
+
   guns: number;
   turrets: number;
   bays: number;
@@ -15,6 +18,8 @@ export interface Ship {
 export interface Variant {
   base: string;
   name: string;
+  thumbnail?: string;
+
   guns: number | null;
   turrets: number | null;
   bays: number | null;
@@ -22,6 +27,8 @@ export interface Variant {
 
 export interface Outfit {
   name: string;
+  category?: string;
+  thumbnail: string;
 }
 
 export interface PluginData {
@@ -30,7 +37,9 @@ export interface PluginData {
   outfits: Record<string, Outfit>;
 }
 
-function parseDataFile(text: string): PluginData {
+const hiddenCategories = ['Unclassified', 'Unclassified Minor'];
+
+function parseDataFile(plugin: Plugin, text: string): PluginData {
   const data = parse(text) as PluginData;
   data.variants = Object.fromEntries(
     Object.entries(data.variants).filter(([, v]) => {
@@ -39,6 +48,29 @@ function parseDataFile(text: string): PluginData {
       return v.guns || v.turrets || v.bays || Object.keys(attributes).length > 0;
     }),
   );
+
+  for (const s of Object.values(data.ships)) {
+    if (!s.category || !s.thumbnail || hiddenCategories.includes(s.category)) {
+      delete data.ships[s.name];
+      continue;
+    }
+    s.thumbnail = getRawUrl({ ...plugin, file: `images/${s.thumbnail}.png` });
+  }
+
+  for (const v of Object.values(data.variants)) {
+    if (v.thumbnail) {
+      v.thumbnail = getRawUrl({ ...plugin, file: `images/${v.thumbnail}.png` });
+    }
+  }
+
+  for (const o of Object.values(data.outfits)) {
+    if (!o.category) {
+      delete data.outfits[o.name];
+      continue;
+    }
+    o.thumbnail = getRawUrl({ ...plugin, file: `images/${o.thumbnail}.png` });
+  }
+
   return data;
 }
 
@@ -91,22 +123,22 @@ export const useGameDataStore = defineStore(
         return loadState.value[url];
       }
 
-      const id = parsePluginUrl(url);
-      if (!id) throw new Error('invalid plugin string');
+      const plugin = parsePluginUrl(url);
+      if (!plugin) throw new Error('invalid plugin string');
 
-      plugins.value.push(id);
+      plugins.value.push(plugin);
 
       const empty = { ships: {}, variants: {}, outfits: {} };
       const data = computedAsync(
         async () => {
-          const urls = await listDataFiles(octokit, id);
+          const urls = await listDataFiles(octokit, plugin);
           total.value = urls.length;
           const dataParts = await Promise.all(
             urls.map(async (url) => {
               const res = await fetch(url);
               const text = await res.text();
               progress.value += 1;
-              return parseDataFile(text);
+              return parseDataFile(plugin, text);
             }),
           );
           return dataParts.reduce(mergePluginData, { ...empty });
@@ -159,34 +191,44 @@ function parsePluginUrl(url: string): Plugin | undefined {
     owner,
     repo,
     branch,
+    sha: undefined,
     dir,
     isBase: owner == BASE_GAME_OWNER && repo == BASE_GAME_REPO,
     enabled: true,
     url,
-  };
+  } as unknown as Plugin;
 }
 
-function getRawUrl(
-  octokit: Octokit,
-  {
-    owner,
-    repo,
-    dir,
-    root_sha,
-    file,
-  }: Pick<Plugin, 'owner' | 'repo' | 'dir'> & { root_sha: string; file: string },
-): string {
+function getRawUrl({
+  owner,
+  repo,
+  dir,
+  sha,
+  file,
+}: Pick<Plugin, 'owner' | 'repo' | 'dir'> & { sha: string; file: string }): string {
   const path = dir ? `${dir}/${file}` : file;
-  return `https://raw.githubusercontent.com/${owner}/${repo}/${root_sha}/${path}`;
+  return `https://raw.githubusercontent.com/${owner}/${repo}/${sha}/${path}`;
 }
 
-async function listDataFiles(octokit: Octokit, { owner, repo, dir, branch }: Plugin) {
-  branch ??= (await octokit.rest.repos.get({ owner, repo })).data.default_branch;
-  const path = dir ? `${dir}/data` : 'data';
-  let tree_sha = branch;
-  let res = await octokit.rest.git.getTree({ owner, repo, tree_sha });
-  const root_sha = res.data.sha;
+async function listDataFiles(octokit: Octokit, plugin: Plugin) {
+  return listFiles(octokit, plugin, 'data');
+}
 
+async function listFiles(octokit: Octokit, plugin: Plugin, folder: 'data' | 'images') {
+  plugin.branch ??= (
+    await octokit.rest.repos.get({ owner: plugin.owner, repo: plugin.repo })
+  ).data.default_branch;
+  plugin.sha ??= (
+    await octokit.rest.git.getTree({
+      owner: plugin.owner,
+      repo: plugin.repo,
+      tree_sha: plugin.branch,
+    })
+  ).data.sha;
+
+  const { owner, repo, dir, sha } = plugin;
+  let tree_sha = sha;
+  const path = dir ? `${dir}/${folder}` : folder;
   const components = path.split('/').reverse();
   while (components.length > 0) {
     const component = components.pop();
@@ -195,20 +237,21 @@ async function listDataFiles(octokit: Octokit, { owner, repo, dir, branch }: Plu
     if (!sha) return [];
     tree_sha = sha;
   }
-  res = await octokit.rest.git.getTree({ owner, repo, tree_sha, recursive: 'true' });
+  const res = await octokit.rest.git.getTree({ owner, repo, tree_sha, recursive: 'true' });
 
   return res.data.tree
     .filter((t) => t.type != 'tree')
     .map((t) => {
-      const file = `data/${t.path}`;
-      return getRawUrl(octokit, { owner, repo, dir, root_sha, file });
+      const file = `${folder}/${t.path}`;
+      return getRawUrl({ owner, repo, dir, sha, file });
     });
 }
 
 export interface Plugin {
   owner: string;
   repo: string;
-  branch?: string | undefined;
+  branch: string;
+  sha: string;
   dir?: string | undefined;
 
   isBase: boolean;
