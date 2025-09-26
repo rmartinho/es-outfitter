@@ -1,9 +1,11 @@
 <template>
   <q-item>
-    <q-card flat>
-      <q-tooltip :delay="1000">
-        <pre>{{ JSON.stringify(ship, null, 2) }}</pre>
-      </q-tooltip>
+    <q-card class="bg-secondary" flat>
+      <template v-if="dev">
+        <q-tooltip :delay="1000">
+          <pre>{{ JSON.stringify(ship, null, 2) }}</pre>
+        </q-tooltip>
+      </template>
       <q-list dense>
         <q-item>
           <q-item-section side>
@@ -12,30 +14,19 @@
             </q-avatar>
           </q-item-section>
           <q-item-section side>
-            <q-chip
-              :ripple="false"
-              square
-              :color="ship.guns > 0 ? 'accent' : 'secondary'"
-              size="sm"
-            >
+            <q-chip :ripple="false" square size="sm">
+              cost
+              {{ numeral(ship.cost).format('0,0') }}
+            </q-chip>
+            <q-chip :class="{ invisible: ship.guns == 0 }" :ripple="false" square size="sm">
               <q-avatar>{{ ship.guns }}</q-avatar>
               {{ ship.guns == 1 ? 'gun' : 'guns' }}
             </q-chip>
-            <q-chip
-              :ripple="false"
-              square
-              :color="ship.turrets > 0 ? 'accent' : 'secondary'"
-              size="sm"
-            >
+            <q-chip :class="{ invisible: ship.turrets == 0 }" :ripple="false" square size="sm">
               <q-avatar>{{ ship.turrets }}</q-avatar>
               {{ ship.turrets == 1 ? 'turret' : 'turrets' }}
             </q-chip>
-            <q-chip
-              :ripple="false"
-              square
-              :color="ship.bays > 0 ? 'accent' : 'secondary'"
-              size="sm"
-            >
+            <q-chip :class="{ invisible: ship.bays == 0 }" :ripple="false" square size="sm">
               <q-avatar>{{ ship.bays }}</q-avatar>
               {{ ship.bays == 1 ? 'bay' : 'bays' }}
             </q-chip>
@@ -51,6 +42,10 @@
 
 <script setup lang="ts">
 import type { Ship } from 'src/stores/game-data';
+import { ref } from 'vue';
+import numeral from 'numeral';
 
 defineProps<{ ship: Ship }>();
+
+const dev = ref(import.meta.env.DEV);
 </script>

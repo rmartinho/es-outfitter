@@ -7,12 +7,14 @@ import { computed, ref, watchEffect } from 'vue';
 
 export interface Ship {
   name: string;
-  category?: string;
+  category: string;
   thumbnail: string;
 
   guns: number;
   turrets: number;
   bays: number;
+
+  cost: number;
 }
 
 export interface Variant {
@@ -27,7 +29,7 @@ export interface Variant {
 
 export interface Outfit {
   name: string;
-  category?: string;
+  category: string;
   thumbnail: string;
 }
 
