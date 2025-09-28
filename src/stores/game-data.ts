@@ -31,6 +31,10 @@ export interface Outfit {
   name: string;
   category: string;
   thumbnail: string;
+  index?: number;
+  series?: string;
+
+  cost: number;
 }
 
 export interface PluginData {
@@ -39,7 +43,8 @@ export interface PluginData {
   outfits: Record<string, Outfit>;
 }
 
-const hiddenCategories = ['Unclassified', 'Unclassified Minor'];
+const hiddenShipCategories = ['Unclassified', 'Unclassified Minor'];
+const hiddenOutfitCategories = ['Licenses', 'Minerals'];
 
 function parseDataFile(plugin: Plugin, text: string): PluginData {
   const data = parse(text) as PluginData;
@@ -52,7 +57,7 @@ function parseDataFile(plugin: Plugin, text: string): PluginData {
   );
 
   for (const s of Object.values(data.ships)) {
-    if (!s.category || !s.thumbnail || hiddenCategories.includes(s.category)) {
+    if (!s.category || !s.thumbnail || hiddenShipCategories.includes(s.category)) {
       delete data.ships[s.name];
       continue;
     }
@@ -66,7 +71,7 @@ function parseDataFile(plugin: Plugin, text: string): PluginData {
   }
 
   for (const o of Object.values(data.outfits)) {
-    if (!o.category) {
+    if (!o.category || !o.thumbnail || hiddenOutfitCategories.includes(o.category)) {
       delete data.outfits[o.name];
       continue;
     }

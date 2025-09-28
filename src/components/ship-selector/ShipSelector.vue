@@ -41,6 +41,7 @@ const sortedShips = computed(() =>
     if (catCmp != 0) {
       return catCmp;
     }
+
     return a.name.localeCompare(b.name);
   }),
 );

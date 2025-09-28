@@ -91,7 +91,7 @@ remove_bays = $'remove bays'
 sprite = @'sprite' _ @string;
 thumbnail = @'thumbnail' _ @string;
 
-outfit_line = line:(weapon / thumbnail|1| / attribute|1| / other_line |1|)
+outfit_line = line:(weapon / attribute|1| / other_line |1|)
 {
     return line;
 }

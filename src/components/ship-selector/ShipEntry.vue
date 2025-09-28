@@ -1,11 +1,6 @@
 <template>
   <q-item>
     <q-card class="bg-secondary" flat>
-      <template v-if="dev">
-        <q-tooltip :delay="1000">
-          <pre>{{ JSON.stringify(ship, null, 2) }}</pre>
-        </q-tooltip>
-      </template>
       <q-list dense>
         <q-item>
           <q-item-section side>
@@ -42,10 +37,7 @@
 
 <script setup lang="ts">
 import type { Ship } from 'src/stores/game-data';
-import { ref } from 'vue';
 import numeral from 'numeral';
 
 defineProps<{ ship: Ship }>();
-
-const dev = ref(import.meta.env.DEV);
 </script>
