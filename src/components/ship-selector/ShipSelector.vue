@@ -1,9 +1,12 @@
 <template>
-  <q-list class="row q-gutter-xs justify-evenly" dense>
-    <template v-for="ship in sortedShips" :key="ship.name">
-      <ship-entry :ship />
-    </template>
-  </q-list>
+  <q-virtual-scroll
+    class="row q-gutter-xs justify-evenly"
+    dense
+    :items="sortedShips"
+    v-slot="{ item, index }"
+  >
+    <ship-entry :key="index" :ship="item" />
+  </q-virtual-scroll>
 </template>
 
 <script setup lang="ts">
