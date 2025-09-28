@@ -1,5 +1,5 @@
 {
-	input = input.split('\n')
+	input = input.split(/\r?\n/)
     	.filter(l => {
         	const trimmed = l.toString().trim();
             return trimmed.length > 0 && !trimmed.startsWith('#');
@@ -80,16 +80,18 @@ outfit = attributes:(decl { return []; })
     };
 }
 
-ship_line = gun / turret / bay / ship_attributes / other_line
+ship_line = gun / turret / bay / sprite|1| / thumbnail|1| / ship_attributes / other_line
 
-variant_line = gun / turret / bay / remove_bays / variant_attributes / other_line
+variant_line = gun / turret / bay / sprite|1| / thumbnail|1|  / remove_bays / variant_attributes / other_line
 
 gun = @'gun' _ num _ num other_line?
 turret = @'turret' _ num _ num other_line?
 bay = @'bay' _ id _ num _ num other_line?
 remove_bays = $'remove bays'
+sprite = @'sprite' _ @string;
+thumbnail = @'thumbnail' _ @string;
 
-outfit_line = line:(weapon / attribute |1| / other_line |1|)
+outfit_line = line:(weapon / attribute|1| / other_line |1|)
 {
     return line;
 }
