@@ -3,17 +3,48 @@
     <q-card-section horizontal>
       <q-card-section>
         <q-avatar size="128px" square>
-          <q-img fit="scale-down" :loading-show-delay="100" :src="design.ship.thumbnail" />
+          <q-img fit="contain" :loading-show-delay="100" :src="design.ship.thumbnail" />
         </q-avatar>
-        <q-select dense v-model="design.ship" :options="shipOptions" option-label="name">
+        <q-select
+          dense
+          class="text-secondary"
+          v-model="design.ship"
+          :options="shipOptions"
+          option-label="name"
+          hide-selected
+          fill-input
+          use-input
+          @filter="filterShips"
+          input-debounce="0"
+        >
+          <template #no-option>
+            <q-item>
+              <q-item-section class="text-grey">No results</q-item-section>
+            </q-item>
+          </template>
+          <template #prepend>
+            <q-avatar square>
+              <q-img fit="contain" :loading-show-delay="100" :src="design.ship.thumbnail" />
+            </q-avatar>
+          </template>
           <template #option="{ itemProps, opt }">
             <ship-entry v-bind="itemProps" :ship="opt" />
           </template>
         </q-select>
-        <q-select dense v-model="newOutfit" :options="outfitOptions" option-label="name">
+        <q-select
+          dense
+          v-model="newOutfit"
+          :options="outfitOptions"
+          option-label="name"
+          hide-selected
+          fill-input
+          use-input
+          @filter="filterOutfits"
+          input-debounce="0"
+        >
           <template #prepend>
             <q-avatar square>
-              <q-img fit="scale-down" :loading-show-delay="100" :src="newOutfit?.thumbnail" />
+              <q-img fit="contain" :loading-show-delay="100" :src="newOutfit?.thumbnail" />
             </q-avatar>
           </template>
           <template #after>
@@ -22,20 +53,24 @@
             </q-btn>
           </template>
           <template #option="{ itemProps, opt }">
-            <outfit-entry v-bind="itemProps" :outfit="opt" />
+            <outfit-entry style="height: 3rem" v-bind="itemProps" :outfit="opt" />
           </template>
         </q-select>
         <q-scroll-area style="height: 60vh; width: 400px">
-          <q-list>
+          <q-list dense>
             <template v-for="([outfit, count], i) in design.outfits" :key="i">
-              <q-item>
-                <outfit-entry :outfit :count />
+              <q-item dense style="height: 4rem">
+                <q-item-section class="col-auto">
+                  <q-btn-group rounded flat>
+                    <q-btn dense size="xs" icon="remove" @click="decOutfit(outfit)" />
+                    <q-chip dense size="md">{{ count }}</q-chip>
+                    <q-btn dense size="xs" icon="add" @click="incOutfit(outfit)" />
+                  </q-btn-group>
+                </q-item-section>
+                <q-item-section>
+                  <outfit-entry :outfit :count />
+                </q-item-section>
                 <q-space />
-                <q-item>
-                  <q-btn round flat icon="remove" @click="decOutfit(outfit)" />
-                  <q-chip>{{ count }}</q-chip>
-                  <q-btn round flat icon="add" @click="incOutfit(outfit)" />
-                </q-item>
               </q-item>
             </template>
           </q-list>
@@ -360,23 +395,30 @@ const shipCategoryOrder = [
   'Drone',
 ];
 
-const shipOptions = computed(() =>
-  Object.values(data.value.ships).sort((a, b) => {
-    let idxA = shipCategoryOrder.indexOf(a.category);
-    let idxB = shipCategoryOrder.indexOf(b.category);
-    idxA = idxA == -1 ? shipCategoryOrder.length : idxA;
-    idxB = idxB == -1 ? shipCategoryOrder.length : idxB;
-    if (idxA != idxB) {
-      return idxA - idxB;
-    }
-    const catCmp = a.category.localeCompare(b.category);
-    if (catCmp != 0) {
-      return catCmp;
-    }
+const sortedShips = computed(() =>
+  Object.freeze(
+    Object.values(data.value.ships).sort((a, b) => {
+      let idxA = shipCategoryOrder.indexOf(a.category);
+      let idxB = shipCategoryOrder.indexOf(b.category);
+      idxA = idxA == -1 ? shipCategoryOrder.length : idxA;
+      idxB = idxB == -1 ? shipCategoryOrder.length : idxB;
+      if (idxA != idxB) {
+        return idxA - idxB;
+      }
+      const catCmp = a.category.localeCompare(b.category);
+      if (catCmp != 0) {
+        return catCmp;
+      }
 
-    return a.name.localeCompare(b.name);
-  }),
+      return a.name.localeCompare(b.name);
+    }),
+  ),
 );
+
+const shipOptions = computed(() => {
+  const name = shipFilter.value.toLowerCase();
+  return sortedShips.value.filter((s) => s.name.toLowerCase().indexOf(name) > -1);
+});
 
 const newOutfit = ref<Outfit | undefined>();
 const incOutfit = (outfit: Outfit) => {
@@ -427,39 +469,59 @@ const seriesOrder = [
   'Licenses',
 ];
 
-const outfitOptions = computed(() =>
-  Object.values(data.value.outfits).sort((a, b) => {
-    let idxA = outfitCategoryOrder.indexOf(a.category);
-    let idxB = outfitCategoryOrder.indexOf(b.category);
-    idxA = idxA == -1 ? outfitCategoryOrder.length : idxA;
-    idxB = idxB == -1 ? outfitCategoryOrder.length : idxB;
-    if (idxA != idxB) {
-      return idxA - idxB;
-    }
-    const catCmp = a.category.localeCompare(b.category);
-    if (catCmp != 0) {
-      return catCmp;
-    }
+const sortedOutfits = computed(() =>
+  Object.freeze(
+    Object.values(data.value.outfits).sort((a, b) => {
+      let idxA = outfitCategoryOrder.indexOf(a.category);
+      let idxB = outfitCategoryOrder.indexOf(b.category);
+      idxA = idxA == -1 ? outfitCategoryOrder.length : idxA;
+      idxB = idxB == -1 ? outfitCategoryOrder.length : idxB;
+      if (idxA != idxB) {
+        return idxA - idxB;
+      }
+      const catCmp = a.category.localeCompare(b.category);
+      if (catCmp != 0) {
+        return catCmp;
+      }
 
-    idxA = seriesOrder.indexOf(a.series ?? '');
-    idxB = seriesOrder.indexOf(b.series ?? '');
-    idxA = idxA == -1 ? seriesOrder.length : idxA;
-    idxB = idxB == -1 ? seriesOrder.length : idxB;
-    if (idxA != idxB) {
-      return idxA - idxB;
-    }
-    const seriesCmp = (a.series ?? 'ZZZZZZZZ').localeCompare(b.series ?? 'ZZZZZZZZ');
-    if (seriesCmp != 0) {
-      return seriesCmp;
-    }
+      idxA = seriesOrder.indexOf(a.series ?? '');
+      idxB = seriesOrder.indexOf(b.series ?? '');
+      idxA = idxA == -1 ? seriesOrder.length : idxA;
+      idxB = idxB == -1 ? seriesOrder.length : idxB;
+      if (idxA != idxB) {
+        return idxA - idxB;
+      }
+      const seriesCmp = (a.series ?? 'ZZZZZZZZ').localeCompare(b.series ?? 'ZZZZZZZZ');
+      if (seriesCmp != 0) {
+        return seriesCmp;
+      }
 
-    idxA = a.index ?? 0;
-    idxB = b.index ?? 0;
-    if (idxA != idxB) {
-      return idxA - idxB;
-    }
+      idxA = a.index ?? 0;
+      idxB = b.index ?? 0;
+      if (idxA != idxB) {
+        return idxA - idxB;
+      }
 
-    return a.name.localeCompare(b.name);
-  }),
+      return a.name.localeCompare(b.name);
+    }),
+  ),
 );
+
+const outfitOptions = computed(() => {
+  const name = outfitFilter.value.toLowerCase();
+  return sortedOutfits.value.filter((o) => o.name.toLowerCase().indexOf(name) > -1);
+});
+
+const shipFilter = ref('');
+const filterShips = (val: string, update: (fn: () => void) => void) => {
+  update(() => {
+    shipFilter.value = val;
+  });
+};
+const outfitFilter = ref('');
+const filterOutfits = (val: string, update: (fn: () => void) => void) => {
+  update(() => {
+    outfitFilter.value = val;
+  });
+};
 </script>
