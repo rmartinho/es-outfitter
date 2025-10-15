@@ -1,5 +1,5 @@
 <template>
-  <q-item clickable>
+  <q-item>
     <q-item-section avatar>
       <q-img fit="contain" :loading-show-delay="100" :src="outfit.thumbnail" />
     </q-item-section>

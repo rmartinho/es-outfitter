@@ -46,9 +46,9 @@ export const attributeKeys = [
   'shield generation',
   'delayed shield generation',
 
-  'hulls',
-  'hull repair',
-  'delayed hull repair',
+  'hull',
+  'hull repair rate',
+  'delayed hull repair rate',
 
   'drag',
   'drag reduction',

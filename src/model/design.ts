@@ -116,16 +116,16 @@ export function useDesign(design: Design) {
   const shields = computed(() => {
     return {
       total: sum(parts.value, 'shields'),
-      charge: sum(parts.value, 'shield generation'),
-      delayedCharge: sum(parts.value, 'delayed shield generation'),
+      charge: FPS * sum(parts.value, 'shield generation'),
+      delayedCharge: FPS * sum(parts.value, 'delayed shield generation'),
     };
   });
 
   const hull = computed(() => {
     return {
-      total: sum(parts.value, 'hulls'),
-      repair: sum(parts.value, 'hull repair'),
-      delayedRepair: sum(parts.value, 'delayed hull repair'),
+      total: sum(parts.value, 'hull'),
+      repair: FPS * sum(parts.value, 'hull repair rate'),
+      delayedRepair: FPS * sum(parts.value, 'delayed hull repair rate'),
     };
   });
 
@@ -242,11 +242,11 @@ export function useDesign(design: Design) {
 
     return {
       capacity,
-      idle: equilibrium(idle, maxDissipation, capacity, -active - maxDissipation * capacity),
-      peak: equilibrium(peak, maxDissipation, capacity),
-      moving: equilibrium(moving, maxDissipation, capacity),
-      firing: equilibrium(firing, maxDissipation, capacity),
-      recovering: equilibrium(recovering, maxDissipation, capacity),
+      idle: equilibrium(idle, 0, maxDissipation, capacity, -active - maxDissipation * capacity),
+      peak: equilibrium(peak, 0, maxDissipation, capacity),
+      moving: equilibrium(moving, idle, maxDissipation, capacity),
+      firing: equilibrium(firing, idle, maxDissipation, capacity),
+      recovering: equilibrium(recovering, idle, maxDissipation, capacity),
     };
   });
 
@@ -380,6 +380,7 @@ export function useDesign(design: Design) {
     star,
     cost,
     space,
+    crew,
     mass,
     shields,
     hull,
@@ -460,13 +461,14 @@ function power(rate: number, idle: number, capacity: number): Power {
 
 function equilibrium(
   prod: number,
+  idle: number,
   dissipation: number,
   capacity: number,
   additional: number = 0,
 ): Equilibrium {
   void capacity; // TODO cooldown time
   if (dissipation == 0) {
-    if (prod == 0) {
+    if (idle + prod == 0) {
       return {
         rate: 0,
         equilibrium: 0,
@@ -480,7 +482,7 @@ function equilibrium(
   }
   return {
     rate: FPS * (prod + additional),
-    equilibrium: Math.max(0, prod / dissipation),
+    equilibrium: Math.max(0, (idle + prod) / dissipation),
   };
 }
 
