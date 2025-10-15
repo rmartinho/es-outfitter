@@ -224,12 +224,12 @@ function peg$parse(input, options) {
         },
         { ships: {}, outfits: {}, variants: {} });
   }
-  function peg$f1() {    return { guns: 0, turrets: 0, bays: 0, attributes: [] };  }
+  function peg$f1() {    return { 'gun ports': 0, 'turret mounts': 0, 'fighter bays': 0, attributes: [] };  }
   function peg$f2(vars, name, attr) {
     if(attr) {
-        if(attr == 'gun') ++vars.guns;
-        else if(attr == 'turret') ++vars.turrets;
-        else if(attr == 'bay') ++vars.bays;
+        if(attr == 'gun') ++vars['gun ports'];
+        else if(attr == 'turret') ++vars['turret mounts'];
+        else if(attr == 'bay') ++vars['fighter bays'];
         else vars.attributes.push(...(Array.isArray(attr)? attr : [attr]));
     }
   }
@@ -241,19 +241,19 @@ function peg$parse(input, options) {
         ...vars,
     };
   }
-  function peg$f4() {    return { guns: null, turrets: null, bays: null, attributes: [] };  }
+  function peg$f4() {    return { 'gun ports': null, 'turret mounts': null, 'fighter bays': null, attributes: [] };  }
   function peg$f5(vars, base, name, attr) {
     if(attr) {
         if(attr == 'gun' || attr == 'turret') {
-            vars.guns ??= 0;
-            vars.turrets ??= 0;
+            vars['gun ports'] ??= 0;
+            vars['turret mounts'] ??= 0;
         } else if(attr == 'bay') {
-            vars.bays ??= 0;
+            vars['fighter bays'] ??= 0;
         }
-        if(attr == 'gun') ++vars.guns;
-        else if(attr == 'turret') ++vars.turrets;
-        else if(attr == 'bay') ++vars.bays;
-        else if(attr == 'remove bays') vars.bays = 0;
+        if(attr == 'gun') ++vars['gun ports'];
+        else if(attr == 'turret') ++vars['turret mounts'];
+        else if(attr == 'bay') ++vars['fighter bays'];
+        else if(attr == 'remove bays') vars['fighter bays'] = 0;
         else vars.attributes.push(...(Array.isArray(attr)? attr : [attr]));
     }
   }

@@ -5,37 +5,183 @@ import { BASE_GAME_OWNER, BASE_GAME_REPO } from 'src/constants';
 import { parse } from 'src/model/data';
 import { computed, ref, watchEffect } from 'vue';
 
-export interface Ship {
+export type Ship = {
   name: string;
   category: string;
   thumbnail: string;
+} & Attributes;
 
-  guns: number;
-  turrets: number;
-  bays: number;
-
-  cost: number;
-}
-
-export interface Variant {
+export type Variant = {
   base: string;
   name: string;
   thumbnail?: string;
+} & Attributes;
 
-  guns: number | null;
-  turrets: number | null;
-  bays: number | null;
-}
-
-export interface Outfit {
+export type Outfit = {
   name: string;
   category: string;
   thumbnail: string;
   index?: number;
   series?: string;
+} & Attributes;
 
-  cost: number;
-}
+export const attributeKeys = [
+  'cost',
+
+  'outfit space',
+  'weapon capacity',
+  'engine capacity',
+  'gun ports',
+  'turret mounts',
+  'fighter bays',
+
+  'bunks',
+  'required crew',
+
+  'mass',
+  'inertia reduction',
+  'cargo space',
+
+  'shields',
+  'shield generation',
+  'delayed shield generation',
+
+  'hulls',
+  'hull repair',
+  'delayed hull repair',
+
+  'drag',
+  'drag reduction',
+
+  'thrust',
+  'turn',
+  'reverse thrust',
+  'afterburner thrust',
+
+  'energy capacity',
+  'energy generation',
+  'solar collection',
+  'energy consumption',
+  'cooling energy',
+  'thrusting energy',
+  'turning energy',
+  'reverse thrusting energy',
+  'afterburner energy',
+  'firing energy',
+  'shield energy',
+  'delayed shield energy',
+  'hull energy',
+  'delayed hull energy',
+
+  'fuel capacity',
+  'fuel generation',
+  'ramscoop',
+  'fuel consumption',
+  'cooling fuel',
+  'thrusting fuel',
+  'turning fuel',
+  'reverse thrusting fuel',
+  'afterburner fuel',
+  'firing fuel',
+  'shield fuel',
+  'delayed shield fuel',
+  'hull fuel',
+  'delayed hull fuel',
+  'jump fuel',
+
+  'cooling',
+  'active cooling',
+  'heat dissipation',
+  'cooling inefficiency',
+  'heat capacity',
+  'heat generation',
+  'solar heat',
+  'heat consumption',
+  'cooling heat',
+  'thrusting heat',
+  'turning heat',
+  'reverse thrusting heat',
+  'afterburner heat',
+  'firing heat',
+  'shield heat',
+  'delayed shield heat',
+  'hull heat',
+  'delayed hull heat',
+
+  'outfit scan power',
+  'outfit scan efficiency',
+  'cargo scan power',
+  'cargo scan efficiency',
+  'asteroid scan power',
+  'tactical scan power',
+
+  'outfit scan opacity',
+  'cargo scan opacity',
+  'scan concealment',
+  'scan interference',
+
+  'capture attack',
+  'capture defense',
+
+  'radar jamming',
+  'optical jamming',
+  'anti-missile',
+
+  'disruption resistance',
+  'disruption protection',
+  'ion resistance',
+  'ion protection',
+  'scramble resistance',
+  'scramble protection',
+  'slowing resistance',
+  'slowing protection',
+  'discharge resistance',
+  'discharge protection',
+  'corrosion resistance',
+  'corrosion protection',
+  'leak resistance',
+  'leak protection',
+  'burn resistance',
+  'burn protection',
+
+  'javelin capacity',
+  'meteor capacity',
+  'sidewinder capacity',
+  'heavy capacity',
+  'torpedo capacity',
+  'typhoon capacity',
+  'gatling capacity',
+  'tracker capacity',
+  'railgun capacity',
+  'emp capacity',
+  'teciimach capacity',
+  'firelight capacity',
+  'firestorm capacity',
+  'piercer capacity',
+  'mine capacity',
+  'speck capacity',
+  'nettle capacity',
+  'orchid capacity',
+  'ophrys capacity',
+  'finisher capacity',
+  'thunderhead capacity',
+  'swarm capacity',
+  'spike capacity',
+  'star tail capacity',
+
+  'anchor point',
+  'spinal mount',
+  'magnetic nozzle',
+  'lasing power',
+
+  'reload',
+] as const;
+
+export type AttributeKey = (typeof attributeKeys)[number];
+
+export type Attributes = {
+  [K in AttributeKey]?: number | undefined;
+};
 
 export interface PluginData {
   ships: Record<string, Ship>;
@@ -50,9 +196,16 @@ function parseDataFile(plugin: Plugin, text: string): PluginData {
   const data = parse(text) as PluginData;
   data.variants = Object.fromEntries(
     Object.entries(data.variants).filter(([, v]) => {
-      const { base, name, guns, turrets, bays, ...attributes } = v;
-      void [base, name, guns, turrets, bays];
-      return v.guns || v.turrets || v.bays || Object.keys(attributes).length > 0;
+      const {
+        base,
+        name,
+        ['gun ports']: guns,
+        ['turret mounts']: turrets,
+        ['fighter bays']: bays,
+        ...attributes
+      } = v;
+      void [base, name];
+      return guns || turrets || bays || Object.keys(attributes).length > 0;
     }),
   );
 
@@ -105,7 +258,7 @@ export const useGameDataStore = defineStore(
     const loadState = ref<Record<string, LoadProgress>>({});
 
     const data = computed(() => {
-      const empty = { ships: {}, variants: {}, outfits: {} };
+      const empty = { ships: {}, variants: {}, outfits: {} } as PluginData;
       return plugins.value
         .filter((p) => p.enabled)
         .reduce((acc, { url }) => mergePluginData(acc, pluginData.value[url]), empty);
@@ -135,7 +288,7 @@ export const useGameDataStore = defineStore(
 
       plugins.value.push(plugin);
 
-      const empty = { ships: {}, variants: {}, outfits: {} };
+      const empty = { ships: {}, variants: {}, outfits: {} } as PluginData;
       const data = computedAsync(
         async () => {
           const urls = await listDataFiles(octokit, plugin);

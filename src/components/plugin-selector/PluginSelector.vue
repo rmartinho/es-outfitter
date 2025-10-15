@@ -1,6 +1,5 @@
 <template>
   <q-list class="q-gutter-sm">
-    <q-item-label header>Plugins</q-item-label>
     <q-item class="column">
       <q-form class="col" @submit="add">
         <q-input
