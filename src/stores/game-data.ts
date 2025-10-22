@@ -5,18 +5,183 @@ import { BASE_GAME_OWNER, BASE_GAME_REPO } from 'src/constants';
 import { parse } from 'src/model/data';
 import { computed, ref, watchEffect } from 'vue';
 
-export interface Ship {
+export type Ship = {
   name: string;
-}
+  category: string;
+  thumbnail: string;
+} & Attributes;
 
-export interface Variant {
+export type Variant = {
   base: string;
   name: string;
-}
+  thumbnail?: string;
+} & Attributes;
 
-export interface Outfit {
+export type Outfit = {
   name: string;
-}
+  category: string;
+  thumbnail: string;
+  index?: number;
+  series?: string;
+} & Attributes;
+
+export const attributeKeys = [
+  'cost',
+
+  'outfit space',
+  'weapon capacity',
+  'engine capacity',
+  'gun ports',
+  'turret mounts',
+  'fighter bays',
+
+  'bunks',
+  'required crew',
+
+  'mass',
+  'inertia reduction',
+  'cargo space',
+
+  'shields',
+  'shield generation',
+  'delayed shield generation',
+
+  'hull',
+  'hull repair rate',
+  'delayed hull repair rate',
+
+  'drag',
+  'drag reduction',
+
+  'thrust',
+  'turn',
+  'reverse thrust',
+  'afterburner thrust',
+
+  'energy capacity',
+  'energy generation',
+  'solar collection',
+  'energy consumption',
+  'cooling energy',
+  'thrusting energy',
+  'turning energy',
+  'reverse thrusting energy',
+  'afterburner energy',
+  'firing energy',
+  'shield energy',
+  'delayed shield energy',
+  'hull energy',
+  'delayed hull energy',
+
+  'fuel capacity',
+  'fuel generation',
+  'ramscoop',
+  'fuel consumption',
+  'cooling fuel',
+  'thrusting fuel',
+  'turning fuel',
+  'reverse thrusting fuel',
+  'afterburner fuel',
+  'firing fuel',
+  'shield fuel',
+  'delayed shield fuel',
+  'hull fuel',
+  'delayed hull fuel',
+  'jump fuel',
+
+  'cooling',
+  'active cooling',
+  'heat dissipation',
+  'cooling inefficiency',
+  'heat capacity',
+  'heat generation',
+  'solar heat',
+  'heat consumption',
+  'cooling heat',
+  'thrusting heat',
+  'turning heat',
+  'reverse thrusting heat',
+  'afterburner heat',
+  'firing heat',
+  'shield heat',
+  'delayed shield heat',
+  'hull heat',
+  'delayed hull heat',
+
+  'outfit scan power',
+  'outfit scan efficiency',
+  'cargo scan power',
+  'cargo scan efficiency',
+  'asteroid scan power',
+  'tactical scan power',
+
+  'outfit scan opacity',
+  'cargo scan opacity',
+  'scan concealment',
+  'scan interference',
+
+  'capture attack',
+  'capture defense',
+
+  'radar jamming',
+  'optical jamming',
+  'anti-missile',
+
+  'disruption resistance',
+  'disruption protection',
+  'ion resistance',
+  'ion protection',
+  'scramble resistance',
+  'scramble protection',
+  'slowing resistance',
+  'slowing protection',
+  'discharge resistance',
+  'discharge protection',
+  'corrosion resistance',
+  'corrosion protection',
+  'leak resistance',
+  'leak protection',
+  'burn resistance',
+  'burn protection',
+
+  'javelin capacity',
+  'meteor capacity',
+  'sidewinder capacity',
+  'heavy capacity',
+  'torpedo capacity',
+  'typhoon capacity',
+  'gatling capacity',
+  'tracker capacity',
+  'railgun capacity',
+  'emp capacity',
+  'teciimach capacity',
+  'firelight capacity',
+  'firestorm capacity',
+  'piercer capacity',
+  'mine capacity',
+  'speck capacity',
+  'nettle capacity',
+  'orchid capacity',
+  'ophrys capacity',
+  'finisher capacity',
+  'thunderhead capacity',
+  'swarm capacity',
+  'spike capacity',
+  'star tail capacity',
+
+  'anchor point',
+  'spinal mount',
+  'magnetic nozzle',
+  'lasing power',
+
+  'reload',
+] as const;
+
+export type AttributeKey = (typeof attributeKeys)[number];
+
+export type Attributes = {
+  [K in AttributeKey]?: number | undefined;
+};
 
 export interface PluginData {
   ships: Record<string, Ship>;
@@ -24,8 +189,49 @@ export interface PluginData {
   outfits: Record<string, Outfit>;
 }
 
-function parseDataFile(text: string): PluginData {
-  return parse(text) as PluginData;
+const hiddenShipCategories = ['Unclassified', 'Unclassified Minor'];
+const hiddenOutfitCategories = ['Licenses', 'Minerals'];
+
+function parseDataFile(plugin: Plugin, text: string): PluginData {
+  const data = parse(text) as PluginData;
+  data.variants = Object.fromEntries(
+    Object.entries(data.variants).filter(([, v]) => {
+      const {
+        base,
+        name,
+        ['gun ports']: guns,
+        ['turret mounts']: turrets,
+        ['fighter bays']: bays,
+        ...attributes
+      } = v;
+      void [base, name];
+      return guns || turrets || bays || Object.keys(attributes).length > 0;
+    }),
+  );
+
+  for (const s of Object.values(data.ships)) {
+    if (!s.category || !s.thumbnail || hiddenShipCategories.includes(s.category)) {
+      delete data.ships[s.name];
+      continue;
+    }
+    s.thumbnail = getRawUrl({ ...plugin, file: `images/${s.thumbnail}.png` });
+  }
+
+  for (const v of Object.values(data.variants)) {
+    if (v.thumbnail) {
+      v.thumbnail = getRawUrl({ ...plugin, file: `images/${v.thumbnail}.png` });
+    }
+  }
+
+  for (const o of Object.values(data.outfits)) {
+    if (!o.category || !o.thumbnail || hiddenOutfitCategories.includes(o.category)) {
+      delete data.outfits[o.name];
+      continue;
+    }
+    o.thumbnail = getRawUrl({ ...plugin, file: `images/${o.thumbnail}.png` });
+  }
+
+  return data;
 }
 
 function mergePluginData(lhs: PluginData, rhs?: PluginData) {
@@ -52,7 +258,7 @@ export const useGameDataStore = defineStore(
     const loadState = ref<Record<string, LoadProgress>>({});
 
     const data = computed(() => {
-      const empty = { ships: {}, variants: {}, outfits: {} };
+      const empty = { ships: {}, variants: {}, outfits: {} } as PluginData;
       return plugins.value
         .filter((p) => p.enabled)
         .reduce((acc, { url }) => mergePluginData(acc, pluginData.value[url]), empty);
@@ -77,22 +283,22 @@ export const useGameDataStore = defineStore(
         return loadState.value[url];
       }
 
-      const id = parsePluginUrl(url);
-      if (!id) throw new Error('invalid plugin string');
+      const plugin = parsePluginUrl(url);
+      if (!plugin) throw new Error('invalid plugin string');
 
-      plugins.value.push(id);
+      plugins.value.push(plugin);
 
-      const empty = { ships: {}, variants: {}, outfits: {} };
+      const empty = { ships: {}, variants: {}, outfits: {} } as PluginData;
       const data = computedAsync(
         async () => {
-          const urls = await listDataFiles(octokit, id);
+          const urls = await listDataFiles(octokit, plugin);
           total.value = urls.length;
           const dataParts = await Promise.all(
             urls.map(async (url) => {
               const res = await fetch(url);
               const text = await res.text();
               progress.value += 1;
-              return parseDataFile(text);
+              return parseDataFile(plugin, text);
             }),
           );
           return dataParts.reduce(mergePluginData, { ...empty });
@@ -126,7 +332,7 @@ export const useGameDataStore = defineStore(
       afterHydrate: (ctx) => {
         const store = ctx.store as ReturnType<typeof useGameDataStore>;
         for (const p of store.plugins) {
-          if (store.loadState[p.url]?.isLoading) {
+          if (!store.loadState[p.url] || store.loadState[p.url]!.isLoading) {
             store.removePlugin(p.url);
           }
         }
@@ -145,34 +351,44 @@ function parsePluginUrl(url: string): Plugin | undefined {
     owner,
     repo,
     branch,
+    sha: undefined,
     dir,
     isBase: owner == BASE_GAME_OWNER && repo == BASE_GAME_REPO,
     enabled: true,
     url,
-  };
+  } as unknown as Plugin;
 }
 
-function getRawUrl(
-  octokit: Octokit,
-  {
-    owner,
-    repo,
-    dir,
-    root_sha,
-    file,
-  }: Pick<Plugin, 'owner' | 'repo' | 'dir'> & { root_sha: string; file: string },
-): string {
+function getRawUrl({
+  owner,
+  repo,
+  dir,
+  sha,
+  file,
+}: Pick<Plugin, 'owner' | 'repo' | 'dir'> & { sha: string; file: string }): string {
   const path = dir ? `${dir}/${file}` : file;
-  return `https://raw.githubusercontent.com/${owner}/${repo}/${root_sha}/${path}`;
+  return `https://raw.githubusercontent.com/${owner}/${repo}/${sha}/${path}`;
 }
 
-async function listDataFiles(octokit: Octokit, { owner, repo, dir, branch }: Plugin) {
-  branch ??= (await octokit.rest.repos.get({ owner, repo })).data.default_branch;
-  const path = dir ? `${dir}/data` : 'data';
-  let tree_sha = branch;
-  let res = await octokit.rest.git.getTree({ owner, repo, tree_sha });
-  const root_sha = res.data.sha;
+async function listDataFiles(octokit: Octokit, plugin: Plugin) {
+  return listFiles(octokit, plugin, 'data');
+}
 
+async function listFiles(octokit: Octokit, plugin: Plugin, folder: 'data' | 'images') {
+  plugin.branch ??= (
+    await octokit.rest.repos.get({ owner: plugin.owner, repo: plugin.repo })
+  ).data.default_branch;
+  plugin.sha ??= (
+    await octokit.rest.git.getTree({
+      owner: plugin.owner,
+      repo: plugin.repo,
+      tree_sha: plugin.branch,
+    })
+  ).data.sha;
+
+  const { owner, repo, dir, sha } = plugin;
+  let tree_sha = sha;
+  const path = dir ? `${dir}/${folder}` : folder;
   const components = path.split('/').reverse();
   while (components.length > 0) {
     const component = components.pop();
@@ -181,20 +397,21 @@ async function listDataFiles(octokit: Octokit, { owner, repo, dir, branch }: Plu
     if (!sha) return [];
     tree_sha = sha;
   }
-  res = await octokit.rest.git.getTree({ owner, repo, tree_sha, recursive: 'true' });
+  const res = await octokit.rest.git.getTree({ owner, repo, tree_sha, recursive: 'true' });
 
   return res.data.tree
     .filter((t) => t.type != 'tree')
     .map((t) => {
-      const file = `data/${t.path}`;
-      return getRawUrl(octokit, { owner, repo, dir, root_sha, file });
+      const file = `${folder}/${t.path}`;
+      return getRawUrl({ owner, repo, dir, sha, file });
     });
 }
 
 export interface Plugin {
   owner: string;
   repo: string;
-  branch?: string | undefined;
+  branch: string;
+  sha: string;
   dir?: string | undefined;
 
   isBase: boolean;

@@ -1,5 +1,5 @@
 {
-	input = input.split('\n')
+	input = input.split(/\r?\n/)
     	.filter(l => {
         	const trimmed = l.toString().trim();
             return trimmed.length > 0 && !trimmed.startsWith('#');
@@ -21,12 +21,12 @@ start = items:(variant / ship / outfit / @other_line eol)* !.
         { ships: {}, outfits: {}, variants: {} });
 }
 
-ship = vars:(decl { return { guns: 0, turrets: 0, bays: 0, attributes: [] }; })
+ship = vars:(decl { return { 'gun ports': 0, 'turret mounts': 0, 'fighter bays': 0, attributes: [] }; })
     'ship' _ name:string eol (tab attr:ship_line eol {
         if(attr) {
-            if(attr == 'gun') ++vars.guns;
-            else if(attr == 'turret') ++vars.turrets;
-            else if(attr == 'bay') ++vars.bays;
+            if(attr == 'gun') ++vars['gun ports'];
+            else if(attr == 'turret') ++vars['turret mounts'];
+            else if(attr == 'bay') ++vars['fighter bays'];
             else vars.attributes.push(...(Array.isArray(attr)? attr : [attr]));
         }
     })*
@@ -39,19 +39,19 @@ ship = vars:(decl { return { guns: 0, turrets: 0, bays: 0, attributes: [] }; })
     };
 }
 
-variant = vars:(decl { return { guns: null, turrets: null, bays: null, attributes: [] }; })
+variant = vars:(decl { return { 'gun ports': null, 'turret mounts': null, 'fighter bays': null, attributes: [] }; })
     'ship' _ base:string _ name:string eol attributes:(tab attr:variant_line eol{
         if(attr) {
             if(attr == 'gun' || attr == 'turret') {
-                vars.guns ??= 0;
-                vars.turrets ??= 0;
+                vars['gun ports'] ??= 0;
+                vars['turret mounts'] ??= 0;
             } else if(attr == 'bay') {
-                vars.bays ??= 0;
+                vars['fighter bays'] ??= 0;
             }
-            if(attr == 'gun') ++vars.guns;
-            else if(attr == 'turret') ++vars.turrets;
-            else if(attr == 'bay') ++vars.bays;
-            else if(attr == 'remove bays') vars.bays = 0;
+            if(attr == 'gun') ++vars['gun ports'];
+            else if(attr == 'turret') ++vars['turret mounts'];
+            else if(attr == 'bay') ++vars['fighter bays'];
+            else if(attr == 'remove bays') vars['fighter bays'] = 0;
             else vars.attributes.push(...(Array.isArray(attr)? attr : [attr]));
         }
     })*
@@ -80,16 +80,18 @@ outfit = attributes:(decl { return []; })
     };
 }
 
-ship_line = gun / turret / bay / ship_attributes / other_line
+ship_line = gun / turret / bay / sprite|1| / thumbnail|1| / ship_attributes / other_line
 
-variant_line = gun / turret / bay / remove_bays / variant_attributes / other_line
+variant_line = gun / turret / bay / sprite|1| / thumbnail|1|  / remove_bays / variant_attributes / other_line
 
 gun = @'gun' _ num _ num other_line?
 turret = @'turret' _ num _ num other_line?
 bay = @'bay' _ id _ num _ num other_line?
 remove_bays = $'remove bays'
+sprite = @'sprite' _ @string;
+thumbnail = @'thumbnail' _ @string;
 
-outfit_line = line:(weapon / attribute |1| / other_line |1|)
+outfit_line = line:(weapon / attribute|1| / other_line |1|)
 {
     return line;
 }
